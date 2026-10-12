@@ -3036,5 +3036,152 @@ function initM10Collapsibles(){
 })();
 </script>
 
+
+<style id="m7-performance-and-flip-fix">
+/* V7 SAFETY PATCH: preserve the flip transform and reduce continuous GPU work. */
+.flashcard {
+  transform-style: preserve-3d !important;
+  backface-visibility: visible !important;
+  transition: transform .72s cubic-bezier(.2,.82,.2,1), filter .35s ease !important;
+}
+.flashcard.is-flipped {
+  transform: rotateY(180deg) !important;
+}
+@media (hover: hover) and (pointer: fine) {
+  .flashcard:not(.is-flipped):hover {
+    transform: translateY(-3px) !important;
+  }
+  .flashcard.is-flipped:hover {
+    transform: rotateY(180deg) translateY(-3px) !important;
+  }
+}
+@media (hover: none), (pointer: coarse) {
+  .flashcard:hover,
+  .flashcard.is-flipped:hover {
+    filter: none !important;
+  }
+}
+/* Avoid filter-heavy, permanent hover glow on mobile while keeping the cinematic look. */
+@media (max-width: 700px) {
+  body:after { animation: none !important; opacity: .42 !important; filter: blur(30px) !important; }
+  body:before { animation: none !important; opacity: .12 !important; }
+  header,.panel,.maestro-library-tools,.hero-progress,.mini-stat,.m10-topic-section,
+  .modal-content,.reading-paper,.reading-side,.reading-preview-card,.m10-deck-card,
+  .cluster-card,.mode-card,.quiz-option,#view-tools .m10-tool-card {
+    will-change: auto !important;
+  }
+  #view-home .panel:hover,#view-home .mini-stat:hover,.m10-topic-section:hover,
+  .m10-deck-card:hover,.cluster-card:hover,.mode-card:hover,.quiz-option:hover,
+  #view-tools .m10-tool-card:hover {
+    transform: none !important;
+    filter: none !important;
+  }
+}
+/* The staggered entrance runs once; do not keep cards promoted to GPU layers. */
+header,.panel,.maestro-library-tools,.hero-progress,.mini-stat,.m10-topic-section,
+.modal-content,.reading-paper,.reading-side,.reading-preview-card,.m10-deck-card,
+.cluster-card,.mode-card,.quiz-option,#view-tools .m10-tool-card {
+  will-change: auto !important;
+}
+/* Keep the flip faces on their own 3D planes; never apply hidden backfaces to the rotating wrapper. */
+.flashcard .card-face { backface-visibility: hidden !important; }
+@media (prefers-reduced-motion: reduce) {
+  .flashcard,.flashcard.is-flipped { transition-duration: .01ms !important; }
+}
+</style>
+
+
+<style id="m8-flip-performance-fix">
+/* Fix: the old card-swap keyframes animated transform on the same element as rotateY,
+   which can override the flip. Keep the swap cue opacity-only. */
+@keyframes m10CardSwap {
+  from { opacity: .35; }
+  to   { opacity: 1; }
+}
+/* GPU-friendly 3D card: wrapper rotates, both faces hide their backs. */
+.flashcard-scene {
+  perspective: 1000px;
+  transform: translateZ(0);
+}
+#flashcardObj.flashcard {
+  position: relative;
+  transform: translate3d(0,0,0);
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+  transition: transform .48s cubic-bezier(.2,.75,.25,1), opacity .22s ease !important;
+  filter: none !important;
+  will-change: transform;
+}
+#flashcardObj.flashcard.is-flipped {
+  transform: translate3d(0,0,0) rotateY(180deg) !important;
+}
+#flashcardObj.flashcard .card-face {
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
+  transform: translateZ(0);
+  box-shadow: none !important;
+}
+#flashcardObj.flashcard .card-face.back {
+  transform: rotateY(180deg) translateZ(1px);
+}
+@media (hover:hover) and (pointer:fine) {
+  #flashcardObj.flashcard:not(.is-flipped):hover {
+    transform: translate3d(0,-3px,0) !important;
+  }
+  #flashcardObj.flashcard.is-flipped:hover {
+    transform: translate3d(0,-3px,0) rotateY(180deg) !important;
+  }
+}
+@media (hover:none), (pointer:coarse) {
+  #flashcardObj.flashcard { will-change: auto; }
+  #flashcardObj.flashcard:hover,
+  #flashcardObj.flashcard.is-flipped:hover { transform: none !important; }
+  #flashcardObj.flashcard.is-flipped { transform: rotateY(180deg) !important; }
+}
+/* Avoid expensive blur/shadows while moving on smaller devices. */
+@media (max-width: 760px) {
+  .flashcard-scene { filter: none !important; }
+  #flashcardObj.flashcard { box-shadow: none !important; }
+  .card-face { box-shadow: none !important; }
+  .modal { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #flashcardObj.flashcard { transition-duration: .01ms !important; will-change: auto; }
+}
+</style>
+
+
+<style id="m9-mobile-flip-emergency-fix">
+/* M9: touch browsers may keep :hover active after tapping. Never let hover override flip state. */
+#view-flashcard #flashcardObj.flashcard {
+  transform: translate3d(0,0,0) !important;
+  transform-style: preserve-3d !important;
+  -webkit-transform-style: preserve-3d !important;
+  transition: transform .42s ease !important;
+}
+#view-flashcard #flashcardObj.flashcard.is-flipped,
+#view-flashcard #flashcardObj.flashcard.is-flipped:hover,
+#view-flashcard #flashcardObj.flashcard.is-flipped:active,
+#view-flashcard .flashcard-scene:active #flashcardObj.flashcard.is-flipped {
+  transform: translate3d(0,0,0) rotateY(180deg) !important;
+}
+/* Do not add a hover lift to the study card; it conflicts with the 3D rotation on mobile. */
+#view-flashcard #flashcardObj.flashcard:hover:not(.is-flipped) {
+  transform: translate3d(0,0,0) !important;
+}
+#view-flashcard #flashcardObj.flashcard .card-face {
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
+}
+#view-flashcard #flashcardObj.flashcard .card-face.back {
+  transform: rotateY(180deg) translateZ(1px) !important;
+}
+@media (max-width:760px) {
+  #view-flashcard #flashcardObj.flashcard { will-change: auto !important; }
+}
+</style>
+
 </body>
 </html>
