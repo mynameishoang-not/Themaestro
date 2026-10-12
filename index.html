@@ -3183,5 +3183,282 @@ header,.panel,.maestro-library-tools,.hero-progress,.mini-stat,.m10-topic-sectio
 }
 </style>
 
+
+<style id="m10-performance-and-motion-polish">
+/* Keep the existing app logic/features; this layer only refines rendering and motion. */
+:root {
+  --m10-motion-ease: cubic-bezier(.2,.75,.25,1);
+  --m10-motion-fast: 220ms;
+  --m10-motion-normal: 300ms;
+}
+/* The card swap cue must not animate transform: the card wrapper owns rotateY. */
+@keyframes m10CardSwap { from { opacity: .45; } to { opacity: 1; } }
+#view-flashcard .flashcard-scene { contain: layout paint; }
+#view-flashcard #flashcardObj.flashcard {
+  transition: transform 300ms var(--m10-motion-ease) !important;
+  transform-style: preserve-3d !important;
+  -webkit-transform-style: preserve-3d !important;
+  backface-visibility: visible !important;
+  -webkit-backface-visibility: visible !important;
+}
+#view-flashcard #flashcardObj.flashcard.is-flipped,
+#view-flashcard #flashcardObj.flashcard.is-flipped:hover,
+#view-flashcard #flashcardObj.flashcard.is-flipped:active {
+  transform: rotateY(180deg) !important;
+}
+#view-flashcard #flashcardObj.flashcard .card-face {
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
+}
+#view-flashcard #flashcardObj.flashcard .card-face.back {
+  transform: rotateY(180deg) translateZ(1px) !important;
+}
+/* Isolate the celebration overlay so its motion does not repaint the study dashboard. */
+.m10-streak-overlay { contain: layout paint style; }
+.m10-streak-overlay:before, .m10-streak-overlay:after { pointer-events: none; }
+/* Phones: remove expensive ambient motion, blur, and hover effects; keep short feedback. */
+@media (max-width: 760px), (pointer: coarse) {
+  body:before, body:after { animation: none !important; }
+  .m10-streak-overlay { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+  .m10-streak-overlay:before { animation: m6StreakShockwave 900ms ease-out both !important; box-shadow: 0 0 18px var(--streak-glow) !important; }
+  .m10-streak-overlay:after { animation: m6StreakShockwave 950ms ease-out .08s both !important; box-shadow: 0 0 12px var(--streak-glow) !important; }
+  .m10-streak-fire { filter: none !important; animation-duration: 2.4s !important; }
+  #view-home .panel:hover, #view-home .mini-stat:hover, .m10-topic-section:hover,
+  .m10-deck-card:hover, .cluster-card:hover, .mode-card:hover, .quiz-option:hover,
+  #view-tools .m10-tool-card:hover { transform: none !important; filter: none !important; }
+  #view-flashcard #flashcardObj.flashcard { box-shadow: none !important; will-change: auto !important; }
+  #view-flashcard .card-face { box-shadow: none !important; }
+  .modal { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+}
+/* Respect system motion preferences without changing any app behavior. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+</style>
+
+
+<style id="m11-motion-physics-performance">
+/* M11: tune motion and interaction feedback without changing learning/data logic. */
+:root {
+  --m11-spring: cubic-bezier(.34,1.36,.64,1);
+  --m11-ease-out: cubic-bezier(.25,1,.5,1);
+}
+/* Immediate tactile press; animate only compositor-friendly properties. */
+.btn,.m10-nav-btn,.m10-topic-tab,.srs-btn,.account-btn,.m10-tool-card,.quiz-option,
+.maestro-filter-button,.maestro-filter-menu button,.mode-card,.cluster-card {
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 220ms var(--m11-spring), opacity 220ms ease,
+              border-color 220ms ease, background-color 220ms ease,
+              box-shadow 220ms ease !important;
+}
+.btn:active,.m10-nav-btn:active,.m10-topic-tab:active,.srs-btn:active,
+.account-btn:active,.m10-tool-card:active,.quiz-option:active,
+.maestro-filter-button:active,.maestro-filter-menu button:active,
+.mode-card:active,.cluster-card:active {
+  transform: translateY(2px) scale(.985) !important;
+  transition-duration: 80ms !important;
+}
+/* One entrance cue per view, no layout-property animation. */
+@keyframes m11ViewEnter { from { opacity:0; transform:translate3d(0,9px,0) } to { opacity:1; transform:translate3d(0,0,0) } }
+@keyframes m11ViewExit { from { opacity:1; transform:translate3d(0,0,0) } to { opacity:0; transform:translate3d(0,-4px,0) } }
+.view-section.m10-view-enter { animation: m11ViewEnter 280ms var(--m11-ease-out) both !important; }
+.view-section.m10-view-exit { animation: m11ViewExit 140ms ease-in both !important; }
+/* Smooth progress without the previous perpetual shimmer repaint. */
+.progress-fill,.m10-deck-card .progress-fill,#m10StudyProgressBar {
+  transition: width 560ms var(--m11-ease-out), transform 260ms var(--m11-spring) !important;
+  animation: none !important;
+}
+/* Flashcard wrapper exclusively owns the 3D rotation. */
+#view-flashcard .flashcard-scene { perspective: 1000px; contain: layout paint; }
+#view-flashcard #flashcardObj.flashcard {
+  transform: translate3d(0,0,0);
+  transform-style: preserve-3d !important;
+  -webkit-transform-style: preserve-3d !important;
+  transition: transform 360ms var(--m11-spring) !important;
+  filter: none !important;
+  backface-visibility: visible !important;
+  -webkit-backface-visibility: visible !important;
+}
+#view-flashcard #flashcardObj.flashcard.is-flipped,
+#view-flashcard #flashcardObj.flashcard.is-flipped:hover,
+#view-flashcard #flashcardObj.flashcard.is-flipped:active { transform: translate3d(0,0,0) rotateY(180deg) !important; }
+#view-flashcard #flashcardObj.flashcard:not(.is-flipped):hover,
+#view-flashcard #flashcardObj.flashcard:not(.is-flipped):active { transform: translate3d(0,0,0) !important; }
+#view-flashcard #flashcardObj .card-face {
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
+}
+#view-flashcard #flashcardObj .card-face.back { transform: rotateY(180deg) translateZ(1px) !important; }
+/* Feedback is brief and local to the selected answer. */
+@keyframes m11WrongShake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 50%{transform:translateX(4px)} 75%{transform:translateX(-2px)} }
+@keyframes m11CorrectPop { 0%{transform:scale(1)} 55%{transform:scale(1.018)} 100%{transform:scale(1)} }
+.quiz-option.wrong { animation: m11WrongShake 260ms ease-out both; }
+.quiz-option.correct { animation: m11CorrectPop 260ms var(--m11-spring) both; }
+/* Remove decorative always-running motion that competes with study interactions. */
+header:after,.m10-tools-intro:after,.header:before,.panel:before,.mini-stat:before,
+.m10-topic-section:before,.m10-deck-card:after,.cluster-card:before,.mode-card:before,
+.quiz-option:before,#view-tools .m10-tool-card:before { animation: none !important; }
+@media (max-width:760px), (pointer:coarse) {
+  header:after,.m10-tools-intro:after { display:none !important; }
+  .panel,.m10-deck-card,.m10-topic-section,.cluster-card,.mode-card,.quiz-option,
+  #view-tools .m10-tool-card { box-shadow: 0 8px 22px rgba(0,0,0,.12) !important; }
+  #view-flashcard #flashcardObj.flashcard { box-shadow:none !important; }
+  .m10-streak-overlay { backdrop-filter:none !important; -webkit-backdrop-filter:none !important; }
+  .m10-streak-overlay:before,.m10-streak-overlay:after { box-shadow:0 0 12px var(--streak-glow) !important; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .view-section.m10-view-enter,.view-section.m10-view-exit,
+  .quiz-option.wrong,.quiz-option.correct { animation:none !important; }
+  .btn:active,.m10-nav-btn:active,.m10-topic-tab:active,.srs-btn:active,
+  .account-btn:active,.m10-tool-card:active,.quiz-option:active { transform:none !important; }
+  #view-flashcard #flashcardObj.flashcard { transition-duration:.01ms !important; }
+}
+
+/* v12: spatial routing, immediate pressed state, and low-cost mobile gestures */
+:root { --m12-ease: cubic-bezier(.2,.8,.2,1); }
+@supports (view-transition-name: root) {
+  ::view-transition-old(root) { animation: m12-page-out 180ms var(--m12-ease) both; }
+  ::view-transition-new(root) { animation: m12-page-in 300ms var(--m12-ease) both; }
+}
+@keyframes m12-page-out { to { opacity:.72; transform:translateX(-10px) scale(.992); } }
+@keyframes m12-page-in { from { opacity:.7; transform:translateX(16px) scale(.99); } to { opacity:1; transform:translateX(0) scale(1); } }
+.view-section.m12-route-enter { animation:m12-route-in 310ms var(--m12-ease) both; }
+@keyframes m12-route-in { from { opacity:.55; transform:translate3d(14px,7px,0) scale(.99); } to { opacity:1; transform:translate3d(0,0,0) scale(1); } }
+/* Touch feedback paints immediately; the app's original handlers still own all logic. */
+.btn.m12-pressed,.m10-nav-btn.m12-pressed,.srs-btn.m12-pressed,.quiz-option.m12-pressed {
+  filter:brightness(1.18) saturate(1.12)!important;
+  transform:translate3d(0,1px,0) scale(.975)!important;
+  transition:transform 55ms ease,filter 55ms ease!important;
+}
+.quiz-option { -webkit-tap-highlight-color:transparent; }
+.m10-streak-fire { transform-origin:50% 85%; animation:m12-fire-flicker 1.15s ease-in-out infinite alternate; }
+@keyframes m12-fire-flicker {
+  0% { transform:rotate(-4deg) scale(.97); filter:drop-shadow(0 0 3px rgba(245,158,11,.25)); }
+  45% { transform:rotate(3deg) scale(1.06); filter:drop-shadow(0 0 8px rgba(245,158,11,.6)); }
+  100% { transform:rotate(-1deg) scale(1.01); filter:drop-shadow(0 0 5px rgba(255,100,30,.45)); }
+}
+#view-flashcard .flashcard-scene { touch-action:pan-y; }
+#view-flashcard .flashcard-scene.m12-dragging { cursor:grabbing; }
+#view-flashcard .flashcard-scene.m12-dragging #flashcardObj { transition:none!important; }
+#view-flashcard .flashcard-scene.m12-swipe-success { animation:m12-swipe-success 240ms ease-out both; }
+#view-flashcard .flashcard-scene.m12-swipe-again { animation:m12-swipe-again 240ms ease-out both; }
+@keyframes m12-swipe-success { 50% { transform:translateX(10px) rotate(1deg); } }
+@keyframes m12-swipe-again { 50% { transform:translateX(-10px) rotate(-1deg); } }
+@media(prefers-reduced-motion:reduce) {
+  ::view-transition-old(root),::view-transition-new(root),.view-section.m12-route-enter,
+  .m10-streak-fire,#view-flashcard .flashcard-scene.m12-swipe-success,
+  #view-flashcard .flashcard-scene.m12-swipe-again { animation:none!important; }
+}
+
+</style>
+<script id="m11-haptic-feedback">
+(function(){
+  'use strict';
+  // Haptics are optional: unsupported browsers simply skip them.
+  function tapVibration(ms){
+    try { if (navigator && typeof navigator.vibrate === 'function') navigator.vibrate(ms); } catch (_) {}
+  }
+  document.addEventListener('pointerdown', function(event){
+    if (!event.isPrimary || event.button !== 0) return;
+    const target = event.target && event.target.closest ? event.target.closest('#view-flashcard .flashcard-scene, #view-quiz .quiz-option') : null;
+    if (target) tapVibration(10);
+  }, {passive:true});
+})();
+</script>
+
+
+<script id="m12-fluid-navigation-and-gestures">
+(function(){
+  'use strict';
+  const reduced = () => window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let routing = false;
+  const originalShowView = window.showView;
+  window.showView = function(viewId) {
+    const next = document.getElementById(viewId);
+    if (!next) return;
+    const current = document.querySelector('.view-section.active');
+    if (current === next) {
+      if (typeof originalShowView === 'function') return originalShowView.apply(this, arguments);
+      return;
+    }
+    // Use native View Transitions when available; keep the existing route function as source of truth.
+    if (!routing && !reduced() && typeof document.startViewTransition === 'function') {
+      routing = true;
+      try {
+        const transition = document.startViewTransition(() => {
+          originalShowView.apply(this, arguments);
+        });
+        Promise.resolve(transition.finished).catch(()=>{}).finally(()=>{routing=false;});
+        return;
+      } catch (_) { routing=false; }
+    }
+    originalShowView.apply(this, arguments);
+    next.classList.remove('m12-route-enter');
+    if (!reduced()) {
+      void next.offsetWidth;
+      next.classList.add('m12-route-enter');
+      setTimeout(()=>next.classList.remove('m12-route-enter'),340);
+    }
+  };
+
+  // Immediate visual response is delegated to CSS; business logic runs on the original click.
+  let pressedTimer = 0;
+  document.addEventListener('pointerdown', function(e){
+    if (!e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    const target = e.target && e.target.closest && e.target.closest('.quiz-option,.srs-btn,.btn,.m10-nav-btn');
+    if (!target || target.disabled) return;
+    target.classList.add('m12-pressed');
+    clearTimeout(pressedTimer);
+    pressedTimer = setTimeout(()=>target.classList.remove('m12-pressed'),180);
+  }, {passive:true});
+  ['pointerup','pointercancel','pointerleave'].forEach(type=>document.addEventListener(type, function(e){
+    const target=e.target && e.target.closest && e.target.closest('.m12-pressed');
+    if(target) setTimeout(()=>target.classList.remove('m12-pressed'),85);
+  }, {passive:true}));
+
+  // Swipe gestures on the card: right = remembered (Good), left = review again (Again).
+  let startX=0,startY=0,lastX=0,dragging=false,swipeConsumed=false,pointerId=null;
+  function scene(){return document.querySelector('#view-flashcard .flashcard-scene');}
+  document.addEventListener('pointerdown',function(e){
+    const sc=scene();
+    if(!sc || !sc.contains(e.target) || !e.isPrimary || (e.pointerType==='mouse' && e.button!==0)) return;
+    startX=lastX=e.clientX;startY=e.clientY;dragging=true;swipeConsumed=false;pointerId=e.pointerId;
+    sc.classList.add('m12-dragging');
+  },{passive:true});
+  document.addEventListener('pointermove',function(e){
+    const sc=scene();if(!dragging||!sc||e.pointerId!==pointerId)return;
+    const dx=e.clientX-startX,dy=e.clientY-startY;lastX=e.clientX;
+    if(Math.abs(dx)>Math.abs(dy)*1.15 && Math.abs(dx)>8){
+      sc.style.transform='translate3d('+Math.max(-110,Math.min(110,dx))+'px,0,0) rotate('+Math.max(-7,Math.min(7,dx/22))+'deg)';
+      sc.style.opacity=String(1-Math.min(.18,Math.abs(dx)/600));
+    }
+  },{passive:true});
+  function endSwipe(e){
+    const sc=scene();if(!dragging||!sc||(e&&e.pointerId!==pointerId))return;
+    dragging=false;sc.classList.remove('m12-dragging');
+    const dx=lastX-startX;
+    const dy=e ? e.clientY-startY : 0;
+    sc.style.transform='';sc.style.opacity='';
+    if(Math.abs(dx)>=82 && Math.abs(dx)>Math.abs(dy)*1.2){
+      swipeConsumed=true;
+      sc.classList.remove('m12-swipe-success','m12-swipe-again');void sc.offsetWidth;
+      if(dx>0){sc.classList.add('m12-swipe-success');window.rateCard(3);}
+      else {sc.classList.add('m12-swipe-again');window.rateCard(1);}
+      setTimeout(()=>sc.classList.remove('m12-swipe-success','m12-swipe-again'),260);
+    }
+    pointerId=null;
+  }
+  document.addEventListener('pointerup',endSwipe,{passive:true});
+  document.addEventListener('pointercancel',endSwipe,{passive:true});
+  // Prevent a swipe-release click from accidentally flipping the next card.
+  document.addEventListener('click',function(e){
+    if(!swipeConsumed)return;
+    const sc=e.target && e.target.closest && e.target.closest('#view-flashcard .flashcard-scene');
+    if(sc){e.preventDefault();e.stopPropagation();e.stopImmediatePropagation();}
+    swipeConsumed=false;
+  },true);
+})();
+</script>
+
 </body>
 </html>
